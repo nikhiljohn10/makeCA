@@ -19,19 +19,14 @@ U_CN     := $(NAME).$(DOMAIN)
 
 CERT_FQDN := ""
 
-setup:
-	@sudo mkdir -p $(UNIFI_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private  $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
+setup-root:
+	@sudo mkdir -p $(UNIFI_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
 	@sudo chmod 700 $(ROOT_DIR)/private
-	@sudo chmod 700 $(INTER_DIR)/private
 	@sudo touch $(ROOT_DIR)/index.txt
-	@sudo touch $(INTER_DIR)/index.txt
 	@sudo echo 1000 > $(ROOT_DIR)/serial
-	@sudo echo 1000 > $(INTER_DIR)/serial
-	@sudo echo 1000 > $(INTER_DIR)/crlnumber
 	@sudo cp openssl.cnf $(ROOT_DIR)/openssl.cnf
-	@sudo cp openssl.intermediate.cnf $(INTER_DIR)/openssl.cnf
 
-root-key: setup
+root-key: setup-root
 	@sudo echo
 	@sudo echo "    Generating Root Private key"
 	@sudo echo
@@ -50,7 +45,15 @@ root-verify: root-ca
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
 
-inter-key: root-verify
+setup-inter:
+	@sudo mkdir -p $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
+	@sudo chmod 700 $(INTER_DIR)/private
+	@sudo touch $(INTER_DIR)/index.txt
+	@sudo echo 1000 > $(INTER_DIR)/serial
+	@sudo echo 1000 > $(INTER_DIR)/crlnumber
+	@sudo cp openssl.intermediate.cnf $(INTER_DIR)/openssl.cnf
+
+inter-key: setup-inter
 	@sudo echo
 	@sudo echo "    Generating Intermediate Private key"
 	@sudo echo
@@ -78,6 +81,7 @@ ca-chain: inter-verify
 	@sudo echo
 	@sudo cat $(INTER_DIR)/certs/intermediate.cert.pem $(ROOT_DIR)/certs/ca.cert.pem > $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/ca-chain.cert.pem
+	@sudo cat $(INTER_DIR)/certs/ca-chain.cert.pem
 
 key:
 	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(U_CN).key.pem 2048
