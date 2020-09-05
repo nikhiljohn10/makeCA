@@ -19,6 +19,12 @@ U_CN     := $(NAME).$(DOMAIN)
 
 CERT_FQDN := ""
 
+cleanall:
+	@sudo rm -rf $(ROOT_DIR)
+
+clean-inter:
+	@sudo rm -rf $(INTER_DIR)
+
 setup-root:
 	@sudo mkdir -p $(UNIFI_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
 	@sudo chmod 700 $(ROOT_DIR)/private
@@ -44,6 +50,7 @@ root-verify:
 	@sudo echo "    Verifing Root Public key"
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
+
 
 setup-inter:
 	@sudo mkdir -p $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
@@ -101,9 +108,9 @@ verify:
 	@sudo echo "CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 	@sudo echo
 
-root: setup-root root-key root-ca root-verify
+root: cleanall setup-root root-key root-ca root-verify
 
-intermediate: setup-inter inter-key inter-ca inter-verify
+intermediate: clean-inter setup-inter inter-key inter-ca inter-verify
 
 certi: key pem verify
 
@@ -135,4 +142,4 @@ unifi-ssl: root-verify
 	@sudo service unifi restart
 	@sudo echo "Successfully updated new SSL Certificate in your Unifi Controller"
 
-.PHONY: unifi-ssl root intermediate certi ca-chain crl crl-point revoke-crl
+.PHONY: unifi-ssl root intermediate certi ca-chain crl crl-point revoke-crl cleanall clean-inter
