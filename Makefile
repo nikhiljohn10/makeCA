@@ -37,13 +37,22 @@ endef
 export V3_EXT_STRING
 
 setup:
-	@sudo mkdir -p $(ROOT_DIR)/private $(ROOT_DIR)/certs $(BUILD_DIR)/ 
+	@sudo mkdir -p $(BUILD_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
+	@sudo chmod 700 $(ROOT_DIR)/private
+	@sudo touch $(ROOT_DIR)/index.txt
+	@sudo echo 1000 > $(ROOT_DIR)/serial
 	@sudo cp openssl.cnf $(ROOT_CNF)
 	@sudo cp v3.ext $(V3_EXT)
 
+
+root-key: setup
+	@sudo openssl genrsa -aes256 -out $(ROOT_DIR)/private/ca.key.pem 4096
+	@sudo chmod 400  $(ROOT_DIR)/private/ca.key.pem
+
 root-ca: setup
 	@sudo echo "Generating Root Certificate Authority"
-	@sudo openssl req -x509 -new -nodes -sha256 -days $(DURATION) -keyout $(ROOT_KEY) -out $(ROOT_PUB) -config $(ROOT_CNF) -verify
+
+	#@sudo openssl req -x509 -new -nodes -sha256 -days $(DURATION) -keyout $(ROOT_KEY) -out $(ROOT_PUB) -config $(ROOT_CNF) -verify
 
 unifi-ssl: root-ca
 	@sudo echo "Unifi SSL Updating"
