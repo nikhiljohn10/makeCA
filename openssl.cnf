@@ -57,9 +57,9 @@ x509_extensions     = v3_ca
 countryName                     = IN
 stateOrProvinceName             = Kerala
 localityName                    = Thrissur
-0.organizationName              = Happy Home CA
-organizationalUnitName          =
-commonName                      = Happy Home Certificate Authority
+0.organizationName              = Happy Home
+organizationalUnitName          = Happy Home Certificate Authority
+commonName                      = Happy Home RootCA
 emailAddress                    = me@nikz.in
 
 [ v3_ca ]
