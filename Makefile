@@ -32,36 +32,50 @@ setup:
 	@sudo cp openssl.intermediate.cnf $(INTER_CNF)/openssl.cnf
 
 root-key: setup
-	@sudo echo "\nGenerating Root Private key\n"
+	@sudo echo
+	@sudo echo "    Generating Root Private key"
+	@sudo echo
 	@sudo openssl genrsa -aes256 -out $(ROOT_DIR)/private/ca.key.pem 4096
 	@sudo chmod 400  $(ROOT_DIR)/private/ca.key.pem
 
 root-ca: root-key
-	@sudo echo "\nGenerating Root Public key\n"
+	@sudo echo
+	@sudo echo "    Generating Root Public key"
+	@sudo echo
 	@sudo openssl req -config $(ROOT_DIR)/openssl.cnf -new -sha256 -key $(ROOT_DIR)/private/ca.key.pem -x509 -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem
 
 root-verify: root-ca
-	@sudo echo "\nVerifing Root Public key\n"
+	@sudo echo
+	@sudo echo "    Verifing Root Public key"
+	@sudo echo
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
 
 inter-key: root-verify
-	@sudo echo "\nGenerating Intermediate Private key\n"
+	@sudo echo
+	@sudo echo "    Generating Intermediate Private key"
+	@sudo echo
 	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/intermediate.key.pem 4096
 	@sudo chmod 400 $(INTER_DIR)/private/intermediate.key.pem
 
 inter-ca: inter-key
-	@sudo echo "\nGenerating Intermediate Public key\n"
+	@sudo echo
+	@sudo echo "    Generating Intermediate Public key"
+	@sudo echo
 	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -new -sha256 -key $(INTER_DIR)/private/intermediate.key.pem -out $(INTER_DIR)/csr/intermediate.csr.pem
 	@sudo openssl ca -config $(ROOT_DIR)/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in $(INTER_DIR)/csr/intermediate.csr.pem -out $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/intermediate.cert.pem
 
 inter-verify: inter-ca
-	@sudo echo "\nVerifing Intermediate Public key\n"
+	@sudo echo
+	@sudo echo "    Verifing Intermediate Public key"
+	@sudo echo
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo openssl verify -CAfile $(ROOT_DIR)/certs/ca.cert.pem $(INTER_DIR)/certs/intermediate.cert.pem
 
 ca-chain: inter-verify
-	@sudo echo "\nGenerating Chain of Certificate\n"
+	@sudo echo
+	@sudo echo "Generating Chain of Certificate"
+	@sudo echo
 	@sudo cat $(INTER_DIR)/certs/intermediate.cert.pem $(ROOT_DIR)/certs/ca.cert.pem > $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/ca-chain.cert.pem
 
@@ -77,11 +91,11 @@ ca: key
 verify: ca
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(U_CN).cert.pem
 	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(U_CN).cert.pem
-	@sudo echo "\n"
+	@sudo echo
 	@sudo echo "Private Key: $(INTER_DIR)/private/$(U_CN).key.pem"
 	@sudo echo "Public Key: $(INTER_DIR)/certs/$(U_CN).cert.pem"
 	@sudo echo "CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
-	@sudo echo "\n"
+	@sudo echo
 
 crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
