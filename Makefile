@@ -13,7 +13,7 @@ UNIFI_CSR := /usr/lib/unifi/data/unifi_certificate.csr.pem
 U_C      := "IN"
 U_ST     := "Kerala"
 U_L      := "Thrissur"
-U_O      := "Happy Home CA"
+U_O      := "Happy Home"
 U_E      := "me@nikz.in"
 U_CN     := $(NAME).$(DOMAIN)
 
@@ -26,20 +26,20 @@ setup-root:
 	@sudo echo 1000 > $(ROOT_DIR)/serial
 	@sudo cp openssl.cnf $(ROOT_DIR)/openssl.cnf
 
-root-key: setup-root
+root-key:
 	@sudo echo
 	@sudo echo "    Generating Root Private key"
 	@sudo echo
 	@sudo openssl genrsa -aes256 -out $(ROOT_DIR)/private/ca.key.pem 4096
 	@sudo chmod 400  $(ROOT_DIR)/private/ca.key.pem
 
-root-ca: root-key
+root-ca:
 	@sudo echo
 	@sudo echo "    Generating Root Public key"
 	@sudo echo
 	@sudo openssl req -config $(ROOT_DIR)/openssl.cnf -new -sha256 -key $(ROOT_DIR)/private/ca.key.pem -x509 -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem
 
-root-verify: root-ca
+root-verify:
 	@sudo echo
 	@sudo echo "    Verifing Root Public key"
 	@sudo echo
@@ -53,14 +53,14 @@ setup-inter:
 	@sudo echo 1000 > $(INTER_DIR)/crlnumber
 	@sudo cp openssl.intermediate.cnf $(INTER_DIR)/openssl.cnf
 
-inter-key: setup-inter
+inter-key:
 	@sudo echo
 	@sudo echo "    Generating Intermediate Private key"
 	@sudo echo
 	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/intermediate.key.pem 4096
 	@sudo chmod 400 $(INTER_DIR)/private/intermediate.key.pem
 
-inter-ca: inter-key
+inter-ca:
 	@sudo echo
 	@sudo echo "    Generating Intermediate Public key"
 	@sudo echo
@@ -68,14 +68,14 @@ inter-ca: inter-key
 	@sudo openssl ca -config $(ROOT_DIR)/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in $(INTER_DIR)/csr/intermediate.csr.pem -out $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/intermediate.cert.pem
 
-inter-verify: inter-ca
+inter-verify:
 	@sudo echo
 	@sudo echo "    Verifing Intermediate Public key"
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo openssl verify -CAfile $(ROOT_DIR)/certs/ca.cert.pem $(INTER_DIR)/certs/intermediate.cert.pem
 
-ca-chain: inter-verify
+ca-chain:
 	@sudo echo
 	@sudo echo "Generating Chain of Certificate"
 	@sudo echo
@@ -87,12 +87,12 @@ key:
 	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(U_CN).key.pem 2048
 	@sudo chmod 400 $(INTER_DIR)/private/$(U_CN).key.pem
 
-ca: key
+pem:
 	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(U_CN).key.pem -new -sha256 -out $(INTER_DIR)/csr/$(U_CN).csr.pem
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(U_CN).csr.pem -out $(INTER_DIR)/certs/$(U_CN).cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(U_CN).cert.pem
 
-verify: ca
+verify:
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(U_CN).cert.pem
 	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(U_CN).cert.pem
 	@sudo echo
@@ -100,6 +100,12 @@ verify: ca
 	@sudo echo "Public Key: $(INTER_DIR)/certs/$(U_CN).cert.pem"
 	@sudo echo "CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 	@sudo echo
+
+root: setup-root root-key root-ca root-verify
+
+intermediate: setup-inter inter-key inter-ca inter-verify
+
+certi: key pem verify
 
 crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
@@ -128,3 +134,5 @@ unifi-ssl: root-verify
 	@sudo keytool -import -trustcacerts -alias unifi -file $(UNIFI_DIR)/server.crt -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
 	@sudo service unifi restart
 	@sudo echo "Successfully updated new SSL Certificate in your Unifi Controller"
+
+.PHONY: unifi-ssl root intermediate certi ca-chain crl crl-point revoke-crl
