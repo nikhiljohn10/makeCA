@@ -4,20 +4,11 @@ DURATION  := 5340
 
 ROOT_DIR  := /root/ca
 INTER_DIR := /root/ca/intermediate
-UNIFI_DIR := /usr/lib/unifi
-BUILD_DIR := $(ROOT_DIR)/$(NAME)
+UNIFI_DIR := $(ROOT_DIR)/$(NAME)
 
-V3_EXT    := $(BUILD_DIR)/v3.ext
-CSR_FILE  := $(BUILD_DIR)/server.csr
-CRT_FILE  := $(BUILD_DIR)/server.crt
-
-ROOT_KEY  := $(ROOT_DIR)/private/ca.key.pem
-ROOT_PUB  := $(ROOT_DIR)/certs/ca.cert.pem
-ROOT_CNF  := $(ROOT_DIR)/openssl.cnf
-
-UNIFI_ACE := $(UNIFI_DIR)/lib/ace.jar
-UNIFI_KEY := $(UNIFI_DIR)/data/keystore
-UNIFI_CSR := $(UNIFI_DIR)/data/unifi_certificate.csr.pem
+UNIFI_ACE := /usr/lib/unifi/lib/ace.jar
+UNIFI_KEY := /usr/lib/unifi/data/keystore
+UNIFI_CSR := /usr/lib/unifi/data/unifi_certificate.csr.pem
 
 U_C      := "IN"
 U_ST     := "Kerala"
@@ -29,7 +20,7 @@ U_CN     := $(NAME).$(DOMAIN)
 CERT_FQDN := ""
 
 setup:
-	@sudo mkdir -p $(BUILD_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private  $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
+	@sudo mkdir -p $(UNIFI_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private  $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
 	@sudo chmod 700 $(ROOT_DIR)/private
 	@sudo chmod 700 $(INTER_DIR)/private
 	@sudo touch $(ROOT_DIR)/index.txt
@@ -37,7 +28,7 @@ setup:
 	@sudo echo 1000 > $(ROOT_DIR)/serial
 	@sudo echo 1000 > $(INTER_DIR)/serial
 	@sudo echo 1000 > $(INTER_DIR)/crlnumber
-	@sudo cp openssl.cnf $(ROOT_CNF)/openssl.cnf
+	@sudo cp openssl.cnf $(ROOT_DIR)/openssl.cnf
 	@sudo cp openssl.intermediate.cnf $(INTER_CNF)/openssl.cnf
 
 root-key: setup
@@ -104,12 +95,12 @@ else
 	@sudo echo "CERT_FQDN argument needed"
 endif
 
-unifi-ssl: root-ca
+unifi-ssl: root-verify
 	@sudo echo "Unifi SSL Updating"
 	@sudo java -jar $(UNIFI_ACE) new_cert "$(U_CN)" "$(U_O)" "$(U_L)" "$(U_ST)" "$(U_C)"
-	@sudo cat $(UNIFI_CSR) > $(CSR_FILE)
-	@sudo openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(V3_EXT)
-	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_PUB) -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
-	@sudo keytool -import -trustcacerts -alias unifi -file $(CRT_FILE) -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
+	@sudo cat $(UNIFI_CSR) > $(UNIFI_DIR)/server.csr
+	@sudo openssl x509 -req -in $(UNIFI_DIR)/server.csr -CA $(ROOT_DIR)/certs/ca.cert.pem -CAkey $(ROOT_DIR)/private/ca.key.pem -CAcreateserial -out $(UNIFI_DIR)/server.crt -days $(DURATION) -sha256 -extfile $(UNIFI_DIR)/v3.ext
+	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_DIR)/certs/ca.cert.pem -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
+	@sudo keytool -import -trustcacerts -alias unifi -file $(UNIFI_DIR)/server.crt -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
 	@sudo service unifi restart
 	@sudo echo "Successfully updated new SSL Certificate in your Unifi Controller"
