@@ -63,35 +63,35 @@ endef
 export V3_EXT_STRING
 
 setup:
-    @mkdir -p $(BUILD_DIR)/$(NAME)/ $(ROOT_DIR)/
-    @echo "$$ROOT_CNF_STRING" > $(ROOT_CNF)
-    @echo "$$V3_EXT_STRING" > $(V3_EXT)
+	@mkdir -p $(BUILD_DIR)/$(NAME)/ $(ROOT_DIR)/
+	@echo "$$ROOT_CNF_STRING" > $(ROOT_CNF)
+	@echo "$$V3_EXT_STRING" > $(V3_EXT)
 
 clean:
-    @rm -rf $(BUILD_DIR) $(ROOT_DIR) $(ROOT_CNF) $(V3_EXT)
+	@rm -rf $(BUILD_DIR) $(ROOT_DIR) $(ROOT_CNF) $(V3_EXT)
 
 csr: setup
-    @echo "Generating Certificate Signing Request and Private Key"
-    @openssl req -new -sha256 -nodes -out $(CSR_FILE) -newkey rsa:2048 -keyout $(KEY_FILE) -config $(CNF_FILE)
-    @cat $(KEY_FILE)
-    @cat $(CSR_FILE)
+	@echo "Generating Certificate Signing Request and Private Key"
+	@openssl req -new -sha256 -nodes -out $(CSR_FILE) -newkey rsa:2048 -keyout $(KEY_FILE) -config $(CNF_FILE)
+	@cat $(KEY_FILE)
+	@cat $(CSR_FILE)
 
 sign: setup
-    @echo "Signing CSR and Generating Public Key"
-    @openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(EXT_FILE)
-    @echo "Certificate is signed and expire after $(DURATION) days"
-    @cat $(CRT_FILE)
-    @cat $(ROOT_PUB)
+	@echo "Signing CSR and Generating Public Key"
+	@openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(EXT_FILE)
+	@echo "Certificate is signed and expire after $(DURATION) days"
+	@cat $(CRT_FILE)
+	@cat $(ROOT_PUB)
 
 root-ca: clean setup
-    @echo "Generating Root Certificate Authority"
-    @openssl req -x509 -new -nodes -sha256 -days $(DURATION) -keyout $(ROOT_KEY) -out $(ROOT_PUB) -config $(ROOT_CNF) -verify
+	@echo "Generating Root Certificate Authority"
+	@openssl req -x509 -new -nodes -sha256 -days $(DURATION) -keyout $(ROOT_KEY) -out $(ROOT_PUB) -config $(ROOT_CNF) -verify
 
 unifi-ssl:
-    @sudo echo "Unifi SSL Updating"
-    @sudo java -jar $(UNIFI_ACE) new_cert $(CA_CN) "$(CA_O)" "$(CA_L)" "$(CA_ST)" $(CA_C)
-    @sudo cat $(UNIFI_CSR) > $(CSR_FILE)
-    @sudo openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(EXT_FILE)
-    @sudo keytool -import -trustcacerts -alias root -file $(ROOT_PUB) -keystore $(UNIFI_KEY)
-    @sudo keytool -import -trustcacerts -alias unifi -file $(CRT_FILE) -keystore $(UNIFI_KEY)
-    @sudo service unifi restart
+	@sudo echo "Unifi SSL Updating"
+	@sudo java -jar $(UNIFI_ACE) new_cert $(CA_CN) "$(CA_O)" "$(CA_L)" "$(CA_ST)" $(CA_C)
+	@sudo cat $(UNIFI_CSR) > $(CSR_FILE)
+	@sudo openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(EXT_FILE)
+	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_PUB) -keystore $(UNIFI_KEY)
+	@sudo keytool -import -trustcacerts -alias unifi -file $(CRT_FILE) -keystore $(UNIFI_KEY)
+	@sudo service unifi restart
