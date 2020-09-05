@@ -74,6 +74,6 @@ unifi-ssl:
 	@sudo java -jar $(UNIFI_ACE) new_cert $(CA_CN) "$(CA_O)" "$(CA_L)" "$(CA_ST)" $(CA_C)
 	@sudo cat $(UNIFI_CSR) > $(CSR_FILE)
 	@sudo openssl x509 -req -in $(CSR_FILE) -CA $(ROOT_PUB) -CAkey $(ROOT_KEY) -CAcreateserial -out $(CRT_FILE) -days $(DURATION) -sha256 -extfile $(V3_EXT)
-	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_PUB) -keystore $(UNIFI_KEY)
-	@sudo keytool -import -trustcacerts -alias unifi -file $(CRT_FILE) -keystore $(UNIFI_KEY)
+	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_PUB) -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
+	@sudo keytool -import -trustcacerts -alias unifi -file $(CRT_FILE) -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
 	@sudo service unifi restart
