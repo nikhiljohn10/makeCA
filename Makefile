@@ -110,7 +110,7 @@ verify:
 
 root: cleanall setup-root root-key root-ca root-verify
 
-intermediate: clean-inter setup-inter inter-key inter-ca inter-verify
+intermediate: clean-inter setup-inter inter-key inter-ca inter-verify ca-chain
 
 certi: key pem verify
 
