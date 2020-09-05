@@ -29,7 +29,7 @@ setup:
 	@sudo echo 1000 > $(INTER_DIR)/serial
 	@sudo echo 1000 > $(INTER_DIR)/crlnumber
 	@sudo cp openssl.cnf $(ROOT_DIR)/openssl.cnf
-	@sudo cp openssl.intermediate.cnf $(INTER_CNF)/openssl.cnf
+	@sudo cp openssl.intermediate.cnf $(INTER_DIR)/openssl.cnf
 
 root-key: setup
 	@sudo echo
