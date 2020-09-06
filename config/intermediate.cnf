@@ -47,7 +47,6 @@ emailAddress            = optional
 
 [ req ]
 default_bits        = 2048
-prompt              = no
 distinguished_name  = req_distinguished_name
 string_mask         = utf8only
 default_md          = sha256
@@ -60,6 +59,11 @@ localityName                    = Thrissur
 0.organizationName              = Jwala Diamonds
 organizationalUnitName          = Jwala Diamonds Certificate Authority
 commonName                      = Jwala Diamonds Intermediate CA
+
+countryName_default             = GB
+stateOrProvinceName_default     = England
+localityName_default            =
+0.organizationName_default      = My Company
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
