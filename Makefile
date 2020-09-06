@@ -76,7 +76,7 @@ ca-chain:
 	@sudo echo
 	@sudo cat $(INTER_DIR)/certs/intermediate.cert.pem $(ROOT_DIR)/certs/ca.cert.pem > $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/ca-chain.cert.pem
-	@sudo cat $(INTER_DIR)/certs/ca-chain.cert.pem
+	@sudo echo "Certificate Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 
 key:
 	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
