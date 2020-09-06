@@ -57,9 +57,9 @@ x509_extensions     = v3_ca
 countryName                     = IN
 stateOrProvinceName             = Kerala
 localityName                    = Thrissur
-0.organizationName              = Jwala Diamonds and Jewellers
-organizationalUnitName          = ca.jwala.diamonds
-commonName                      = Jwala Diamonds and Jewellers Root CA
+0.organizationName              = Jwala Diamonds
+organizationalUnitName          = Jwala Diamonds Certificate Authority
+commonName                      = Jwala Diamonds Root CA
 emailAddress                    = ceo@jwala.diamonds
 
 [ v3_ca ]

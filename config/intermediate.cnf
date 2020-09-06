@@ -59,8 +59,8 @@ stateOrProvinceName             = Kerala
 localityName                    = Thrissur
 0.organizationName              = Jwala Diamonds
 organizationalUnitName          = Jwala Diamonds Certificate Authority
-commonName                      = Jwala Diamonds IntermediateCA
-emailAddress                    = ceo@jwaladiamonds.com
+commonName                      = Jwala Diamonds Intermediate CA
+emailAddress                    = ceo@jwala.diamonds
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
