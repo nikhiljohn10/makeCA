@@ -152,6 +152,9 @@ pem:
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).chain.pem
 
 dhparam:
+	@sudo echo
+	@sudo echo "    Generating 2048 bit Diffie-Hellman Certificate"
+	@sudo echo
 	@sudo openssl dhparam -outform pem -out $(INTER_DIR)/certs/dhparam2048.pem 2048
 
 verify:
@@ -183,9 +186,9 @@ endif
 
 root: cleanall setup-root root-key root-ca root-verify
 
-intermediate: cleanin setup-inter inter-key inter-ca inter-verify dhparam ca-chain
+intermediate: cleanin setup-inter inter-key inter-ca inter-verify ca-chain
 
-ca: root intermediate
+ca: dhparam root intermediate
 
 server: clean key csr pem verify
 
