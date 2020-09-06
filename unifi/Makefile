@@ -9,8 +9,8 @@ UNIFI_CITY      := "Thrissur"
 UNIFI_ORG       := "Happy Home"
 UNIFI_EMAIL     := "me@nikz.in"
 
-.PHONY: unifi-ssl 
-unifi-ssl:
+.PHONY: unifi
+unifi:
 ifneq ($(UNIFI_FQDN), "")
 	@sudo echo "Unifi SSL Updating"
 	@sudo java -jar /usr/lib/unifi/lib/ace.jar new_cert "$(UNIFI_FQDN)" "$(UNIFI_ORG)" "$(UNIFI_CITY)" "$(UNIFI_STATE)" "$(UNIFI_COUNTRY)"
