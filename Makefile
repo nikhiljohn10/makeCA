@@ -1,10 +1,10 @@
-HOSTNAME  := make
-DOMAIN    := ca
-ROOT_DIR  := /root/ca
-INTER_DIR := /root/ca/intermediate
-FQDN      := $(HOSTNAME).$(DOMAIN)
-CERT_FQDN := ""
-
+HOSTNAME   := make
+DOMAIN     := ca
+ROOT_DIR   := /root/ca
+INTER_DIR  := /root/ca/intermediate
+FQDN       := $(HOSTNAME).$(DOMAIN)
+CERT_FQDN  := ""
+PASSPHRASE := ""
 test:
 	@sudo echo "$(FQDN)"
 
@@ -79,8 +79,12 @@ ca-chain:
 	@sudo echo "Certificate Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 
 key:
-	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
+ifneq ($(PASSPHRASE), "")
+	@sudo openssl genrsa -aes256 -passout pass:$(PASSPHRASE) -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
 	@sudo chmod 400 $(INTER_DIR)/private/$(FQDN).key.pem
+else
+	@sudo echo "PASSPHRASE argument needed"
+endif
 
 csr:
 	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(FQDN).key.pem -new -sha256 -out $(INTER_DIR)/csr/$(FQDN).csr.pem
