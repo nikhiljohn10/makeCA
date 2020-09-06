@@ -19,7 +19,7 @@ setup-root:
 	@sudo chmod 700 $(ROOT_DIR)/private
 	@sudo touch $(ROOT_DIR)/index.txt
 	@sudo echo 1000 > $(ROOT_DIR)/serial
-	@sudo cp openssl.cnf $(ROOT_DIR)/openssl.cnf
+	@sudo cp config/root.cnf $(ROOT_DIR)/openssl.cnf
 
 root-key:
 	@sudo echo
@@ -46,7 +46,7 @@ setup-inter:
 	@sudo touch $(INTER_DIR)/index.txt
 	@sudo echo 1000 > $(INTER_DIR)/serial
 	@sudo echo 1000 > $(INTER_DIR)/crlnumber
-	@sudo cp openssl.intermediate.cnf $(INTER_DIR)/openssl.cnf
+	@sudo cp config/intermediate.cnf $(INTER_DIR)/openssl.cnf
 
 inter-key:
 	@sudo echo
