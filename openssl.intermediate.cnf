@@ -92,7 +92,6 @@ authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 crlDistributionPoints = URI:http://unifi.home/intermediate.crl.pem
-authorityInfoAccess = OCSP;URI:http://ocsp.unifi.home
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always

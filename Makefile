@@ -1,23 +1,12 @@
-NAME      := unifi
-DOMAIN    := home
-DURATION  := 5340
-
+HOSTNAME  := make
+DOMAIN    := ca
 ROOT_DIR  := /root/ca
 INTER_DIR := /root/ca/intermediate
-UNIFI_DIR := $(ROOT_DIR)/$(NAME)
-
-UNIFI_ACE := /usr/lib/unifi/lib/ace.jar
-UNIFI_KEY := /usr/lib/unifi/data/keystore
-UNIFI_CSR := /usr/lib/unifi/data/unifi_certificate.csr.pem
-
-U_C      := "IN"
-U_ST     := "Kerala"
-U_L      := "Thrissur"
-U_O      := "Happy Home"
-U_E      := "me@nikz.in"
-U_CN     := $(NAME).$(DOMAIN)
-
+FQDN      := $(HOSTNAME).$(DOMAIN)
 CERT_FQDN := ""
+
+test:
+	@sudo echo "$(FQDN)"
 
 cleanall:
 	@sudo rm -rf $(ROOT_DIR)
@@ -51,7 +40,6 @@ root-verify:
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
 
-
 setup-inter:
 	@sudo mkdir -p $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
 	@sudo chmod 700 $(INTER_DIR)/private
@@ -84,35 +72,31 @@ inter-verify:
 
 ca-chain:
 	@sudo echo
-	@sudo echo "Generating Chain of Certificate"
+	@sudo echo "    Generating Chain of Certificate"
 	@sudo echo
 	@sudo cat $(INTER_DIR)/certs/intermediate.cert.pem $(ROOT_DIR)/certs/ca.cert.pem > $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo cat $(INTER_DIR)/certs/ca-chain.cert.pem
 
 key:
-	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(U_CN).key.pem 2048
-	@sudo chmod 400 $(INTER_DIR)/private/$(U_CN).key.pem
+	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
+	@sudo chmod 400 $(INTER_DIR)/private/$(FQDN).key.pem
+
+csr:
+	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(FQDN).key.pem -new -sha256 -out $(INTER_DIR)/csr/$(FQDN).csr.pem
 
 pem:
-	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(U_CN).key.pem -new -sha256 -out $(INTER_DIR)/csr/$(U_CN).csr.pem
-	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(U_CN).csr.pem -out $(INTER_DIR)/certs/$(U_CN).cert.pem
-	@sudo chmod 444 $(INTER_DIR)/certs/$(U_CN).cert.pem
+	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
+	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
 
 verify:
-	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(U_CN).cert.pem
-	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(U_CN).cert.pem
+	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(FQDN).cert.pem
+	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo echo
-	@sudo echo "Private Key: $(INTER_DIR)/private/$(U_CN).key.pem"
-	@sudo echo "Public Key: $(INTER_DIR)/certs/$(U_CN).cert.pem"
-	@sudo echo "CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
+	@sudo echo "    Private Key: $(INTER_DIR)/private/$(FQDN).key.pem"
+	@sudo echo "    Public Key: $(INTER_DIR)/certs/$(FQDN).cert.pem"
+	@sudo echo "    CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 	@sudo echo
-
-root: cleanall setup-root root-key root-ca root-verify
-
-intermediate: clean-inter setup-inter inter-key inter-ca inter-verify ca-chain
-
-certi: key pem verify
 
 crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
@@ -125,21 +109,17 @@ else
 	@sudo echo "CERT_FQDN argument needed"
 endif
 
-revoke-crl:
+revoke-crl: crl-point
 ifneq ($(CERT_FQDN), "")
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -revoke $(INTER_DIR)/certs/$(CERT_FQDN).cert.pem
 else
 	@sudo echo "CERT_FQDN argument needed"
 endif
 
-unifi-ssl: root-verify
-	@sudo echo "Unifi SSL Updating"
-	@sudo java -jar $(UNIFI_ACE) new_cert "$(U_CN)" "$(U_O)" "$(U_L)" "$(U_ST)" "$(U_C)"
-	@sudo cat $(UNIFI_CSR) > $(UNIFI_DIR)/server.csr
-	@sudo openssl x509 -req -in $(UNIFI_DIR)/server.csr -CA $(ROOT_DIR)/certs/ca.cert.pem -CAkey $(ROOT_DIR)/private/ca.key.pem -CAcreateserial -out $(UNIFI_DIR)/server.crt -days $(DURATION) -sha256 -extfile $(UNIFI_DIR)/v3.ext
-	@sudo keytool -import -trustcacerts -alias root -file $(ROOT_DIR)/certs/ca.cert.pem -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
-	@sudo keytool -import -trustcacerts -alias unifi -file $(UNIFI_DIR)/server.crt -keystore $(UNIFI_KEY) -storepass aircontrolenterprise
-	@sudo service unifi restart
-	@sudo echo "Successfully updated new SSL Certificate in your Unifi Controller"
+root: cleanall setup-root root-key root-ca root-verify
 
-.PHONY: unifi-ssl root intermediate certi ca-chain crl crl-point revoke-crl cleanall clean-inter
+intermediate: clean-inter setup-inter inter-key inter-ca inter-verify ca-chain
+
+certi: key csr pem verify
+
+.PHONY: root intermediate certi ca-chain crl crl-point revoke-crl cleanall clean-inter
