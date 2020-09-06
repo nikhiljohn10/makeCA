@@ -55,12 +55,10 @@ x509_extensions     = v3_ca
 
 [ req_distinguished_name ]
 countryName                     = IN
-stateOrProvinceName             = Kerala
-localityName                    = Thrissur
-0.organizationName              = Happy Home
-organizationalUnitName          = Happy Home Certificate Authority
-commonName                      = Happy Home RootCA
-emailAddress                    = me@nikz.in
+0.organizationName              = Jwala Diamonds and Jewellers
+organizationalUnitName          = ca.jwala.diamonds
+commonName                      = Jwala Diamonds and Jewellers Root CA
+emailAddress                    = ceo@jwala.diamonds
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
