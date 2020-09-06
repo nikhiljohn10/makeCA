@@ -47,19 +47,27 @@ emailAddress            = optional
 
 [ req ]
 default_bits        = 2048
-prompt              = no
 distinguished_name  = req_distinguished_name
 string_mask         = utf8only
 default_md          = sha256
 x509_extensions     = v3_ca
 
 [ req_distinguished_name ]
-countryName                     = IN
-stateOrProvinceName             = Kerala
-localityName                    = Thrissur
-0.organizationName              = Jwala Diamonds
-organizationalUnitName          = Jwala Diamonds Certificate Authority
-commonName                      = Jwala Diamonds Root CA
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+commonName                      = Common Name
+emailAddress                    = Email Address
+
+# Optionally, specify some defaults.
+countryName_default             = IN
+stateOrProvinceName_default     = Kerala
+localityName_default            = Thrissur
+0.organizationName_default      = Jwala Diamonds
+organizationalUnitName_default  = Jwala Diamonds Certificate Authority
+#emailAddress_default           =
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
