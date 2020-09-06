@@ -68,6 +68,9 @@ cleanall:
 cleanin:
 	@sudo rm -rf $(INTER_DIR)
 
+clean:
+	@sudo rm -rf $(INTER_DIR)/certs/$(FQDN).chain.pem  $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/csr/$(FQDN).csr.pem $(INTER_DIR)/private/$(FQDN).key.pem
+
 setup-root:
 	@sudo mkdir -p $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
 	@sudo chmod 700 $(ROOT_DIR)/private
@@ -184,8 +187,8 @@ intermediate: cleanin setup-inter inter-key inter-ca inter-verify dhparam ca-cha
 
 ca: root intermediate
 
-server: key csr pem verify
+server: clean key csr pem verify
 
-quick: keyless pem verify
+quick: clean keyless pem verify
 
 .PHONY: ca crl crl-point revoke-crl
