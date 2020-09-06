@@ -65,11 +65,11 @@ help:
 cleanall:
 	@sudo rm -rf $(ROOT_DIR)
 
-clean-inter:
+cleanin:
 	@sudo rm -rf $(INTER_DIR)
 
 setup-root:
-	@sudo mkdir -p $(UNIFI_DIR)/ $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
+	@sudo mkdir -p $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
 	@sudo chmod 700 $(ROOT_DIR)/private
 	@sudo touch $(ROOT_DIR)/index.txt
 	@sudo echo 1000 > $(ROOT_DIR)/serial
@@ -144,8 +144,7 @@ keyless:
 	
 pem:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
-	@sudo cp $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/certs/$(FQDN).chain.pem
-	@sudo cat $(INTER_DIR)/certs/ca-chain.cert.pem >> $(INTER_DIR)/certs/$(FQDN).chain.pem
+	@sudo cat $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/certs/ca-chain.cert.pem > $(INTER_DIR)/certs/$(FQDN).chain.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).chain.pem
 
@@ -181,10 +180,12 @@ endif
 
 root: cleanall setup-root root-key root-ca root-verify
 
-intermediate: clean-inter setup-inter inter-key inter-ca inter-verify dhparam ca-chain
+intermediate: cleanin setup-inter inter-key inter-ca inter-verify dhparam ca-chain
+
+ca: root intermediate
 
 server: key csr pem verify
 
 quick: keyless pem verify
 
-.PHONY: root intermediate certi ca-chain crl crl-point revoke-crl cleanall clean-inter
+.PHONY: ca crl crl-point revoke-crl

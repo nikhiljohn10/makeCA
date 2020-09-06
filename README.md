@@ -14,6 +14,11 @@ For generating intermediateCA certificate:
 sudo make intermediate
 ```
 
+For generating rootCA and intermediateCA certificates together:
+```
+sudo make ca
+```
+
 For generating server certificate:
 ```
 sudo make server FQDN=www.example.com

@@ -60,7 +60,6 @@ localityName                    = Thrissur
 0.organizationName              = Jwala Diamonds
 organizationalUnitName          = Jwala Diamonds Certificate Authority
 commonName                      = Jwala Diamonds Intermediate CA
-emailAddress                    = ceo@jwala.diamonds
 
 [ v3_ca ]
 subjectKeyIdentifier = hash
@@ -91,7 +90,6 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
-crlDistributionPoints = URI:http://unifi.home/intermediate.crl.pem
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always
