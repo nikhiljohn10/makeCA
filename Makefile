@@ -7,42 +7,42 @@ CERT_FQDN  := ""
 
 define DIR_TREE
 
-/root/ca
-├── certs
-│   └── ca.cert.pem ( RootCA Certificate )
-├── crl
-├── index.txt
-├── index.txt.attr
-├── index.txt.old
-├── intermediate
-│   ├── certs
-│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
-│   │   ├── dhparam2048.pem ( 2048 bit Diffie-Hellman Certificate )
-│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
-│   │   └── make.ca.cert.pem ( Server Certificate )
-│   ├── crl
-│   ├── crlnumber
-│   ├── csr
-│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
-│   │   └── make.ca.csr.pem ( Server Signing Request )
-│   ├── index.txt
-│   ├── index.txt.attr
-│   ├── index.txt.old
-│   ├── newcerts
-│   │   └── 1000.pem
-│   ├── openssl.cnf ( IntermediateCA Configuration )
-│   ├── private
-│   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
-│   │   └── make.ca.key.pem ( Server Private Key )
-│   ├── serial
-│   └── serial.old
-├── newcerts
-│   └── 1000.pem
-├── openssl.cnf ( RootCA Configuration )
-├── private
-│   └── ca.key.pem ( RootCA Certificate )
-├── serial
-└── serial.old
+	/root/ca
+	├── certs
+	│   └── ca.cert.pem ( RootCA Certificate )
+	├── crl
+	├── index.txt
+	├── index.txt.attr
+	├── index.txt.old
+	├── intermediate
+	│   ├── certs
+	│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
+	│   │   ├── dhparam2048.pem ( 2048 bit Diffie-Hellman Certificate )
+	│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
+	│   │   └── make.ca.cert.pem ( Server Certificate )
+	│   ├── crl
+	│   ├── crlnumber
+	│   ├── csr
+	│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
+	│   │   └── make.ca.csr.pem ( Server Signing Request )
+	│   ├── index.txt
+	│   ├── index.txt.attr
+	│   ├── index.txt.old
+	│   ├── newcerts
+	│   │   └── 1000.pem
+	│   ├── openssl.cnf ( IntermediateCA Configuration )
+	│   ├── private
+	│   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
+	│   │   └── make.ca.key.pem ( Server Private Key )
+	│   ├── serial
+	│   └── serial.old
+	├── newcerts
+	│   └── 1000.pem
+	├── openssl.cnf ( RootCA Configuration )
+	├── private
+	│   └── ca.key.pem ( RootCA Certificate )
+	├── serial
+	└── serial.old
 endef
 
 export DIR_TREE
@@ -56,9 +56,9 @@ help:
 	@echo "  server FQDN=<x>  to generate Certificate and Private key for the corresponding FQDN"
 	@echo "  quick FQDN=<x>   to generate Certificate and Private key for the corresponding FQDN without Passphrase"
 	@echo
-	@echo "Default FQDN is $(FQDN). Use FQDN=<x> after 'make' command where 'x' is your domain name"
+	@echo "Default FQDN is '$(FQDN)'. Use FQDN=<x> after 'make' command where '<x>' is your domain name"
 	@echo
-	@echo "Tree Structure"
+	@echo "Tree Structure:"
 	@echo "$$DIR_TREE"
 	@echo
 
@@ -144,7 +144,10 @@ keyless:
 	
 pem:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
+	@sudo cp $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/certs/$(FQDN).chain.pem
+	@sudo cat $(INTER_DIR)/certs/ca-chain.cert.pem >> $(INTER_DIR)/certs/$(FQDN).chain.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
+	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).chain.pem
 
 dhparam:
 	@sudo openssl dhparam -outform pem -out $(INTER_DIR)/certs/dhparam2048.pem 2048
@@ -154,6 +157,7 @@ verify:
 	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo echo
 	@sudo echo "    Certificate: $(INTER_DIR)/certs/$(FQDN).cert.pem"
+	@sudo echo "    Certificate Chain: $(INTER_DIR)/certs/$(FQDN).chain.pem"
 	@sudo echo "    Private Key: $(INTER_DIR)/private/$(FQDN).key.pem"
 	@sudo echo
 
