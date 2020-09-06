@@ -7,51 +7,60 @@ CERT_FQDN  := ""
 
 define DIR_TREE
 
-	       ├── certs
-	       │   └── ca.cert.pem ( RootCA Certificate )
-	       ├── crl
-	       ├── index.txt
-	       ├── index.txt.attr
-	       ├── index.txt.old
-	       ├── intermediate
-	       │   ├── certs
-	       │   │   ├── ca-chain.cert.pem ( Chain of Certificates )
-	       │   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
-	       │   │   └── make.ca.cert.pem ( Server Certificate )
-	       │   ├── crl
-	       │   ├── crlnumber
-	       │   ├── csr
-	       │   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
-	       │   │   └── make.ca.csr.pem ( Server Signing Request )
-	       │   ├── index.txt
-	       │   ├── newcerts
-	       │   ├── openssl.cnf
-	       │   ├── private
-	       │   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
-	       │   │   └── make.ca.key.pem ( Server Private Key )
-	       │   └── serial
-	       ├── newcerts
-	       │   └── 1000.pem
-	       ├── openssl.cnf
-	       ├── private
-	       │   └── ca.key.pem ( RootCA Certificate )
-	       ├── serial
-	       └── serial.old
+/root/ca
+├── certs
+│   └── ca.cert.pem ( RootCA Certificate )
+├── crl
+├── index.txt
+├── index.txt.attr
+├── index.txt.old
+├── intermediate
+│   ├── certs
+│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
+│   │   ├── dhparam2048.pem ( 2048 bit Diffie-Hellman Certificate )
+│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
+│   │   └── make.ca.cert.pem ( Server Certificate )
+│   ├── crl
+│   ├── crlnumber
+│   ├── csr
+│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
+│   │   └── make.ca.csr.pem ( Server Signing Request )
+│   ├── index.txt
+│   ├── index.txt.attr
+│   ├── index.txt.old
+│   ├── newcerts
+│   │   └── 1000.pem
+│   ├── openssl.cnf ( IntermediateCA Configuration )
+│   ├── private
+│   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
+│   │   └── make.ca.key.pem ( Server Private Key )
+│   ├── serial
+│   └── serial.old
+├── newcerts
+│   └── 1000.pem
+├── openssl.cnf ( RootCA Configuration )
+├── private
+│   └── ca.key.pem ( RootCA Certificate )
+├── serial
+└── serial.old
 endef
 
 export DIR_TREE
 
 help:
-	@echo "Default FQDN is $(FQDN)"
+	@echo "Welcome to Certificate Authority Generator"
 	@echo
 	@echo "Please use 'sudo make <target>' where <target> is one of"
 	@echo "  root             to generate Root CA"
 	@echo "  intermediate     to generate Intermediate CA"
-	@echo "  server FQDN=<>   to generate Certificate and Private key for the corresponding FQDN"
-	@echo "  quick FQDN=<>    to generate Certificate and Private key for the corresponding FQDN without Passphrase"
+	@echo "  server FQDN=<x>  to generate Certificate and Private key for the corresponding FQDN"
+	@echo "  quick FQDN=<x>   to generate Certificate and Private key for the corresponding FQDN without Passphrase"
 	@echo
+	@echo "Default FQDN is $(FQDN). Use FQDN=<x> after 'make' command where 'x' is your domain name"
 	@echo
-	@echo "Structure of $(ROOT_DIR) $$DIR_TREE"
+	@echo "Tree Structure"
+	@echo "$$DIR_TREE"
+	@echo
 
 cleanall:
 	@sudo rm -rf $(ROOT_DIR)
@@ -137,13 +146,15 @@ pem:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
 
+dhparam:
+	@sudo openssl dhparam -outform pem -out $(INTER_DIR)/certs/dhparam2048.pem 2048
+
 verify:
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo openssl verify -CAfile $(INTER_DIR)/certs/ca-chain.cert.pem $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo echo
+	@sudo echo "    Certificate: $(INTER_DIR)/certs/$(FQDN).cert.pem"
 	@sudo echo "    Private Key: $(INTER_DIR)/private/$(FQDN).key.pem"
-	@sudo echo "    Public Key: $(INTER_DIR)/certs/$(FQDN).cert.pem"
-	@sudo echo "    CA Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 	@sudo echo
 
 crl:
@@ -166,7 +177,7 @@ endif
 
 root: cleanall setup-root root-key root-ca root-verify
 
-intermediate: clean-inter setup-inter inter-key inter-ca inter-verify ca-chain
+intermediate: clean-inter setup-inter inter-key inter-ca inter-verify dhparam ca-chain
 
 server: key csr pem verify
 
