@@ -4,9 +4,54 @@ ROOT_DIR   := /root/ca
 INTER_DIR  := /root/ca/intermediate
 FQDN       := $(HOSTNAME).$(DOMAIN)
 CERT_FQDN  := ""
-PASSPHRASE := ""
-test:
-	@sudo echo "$(FQDN)"
+
+define DIR_TREE
+
+	       ├── certs
+	       │   └── ca.cert.pem ( RootCA Certificate )
+	       ├── crl
+	       ├── index.txt
+	       ├── index.txt.attr
+	       ├── index.txt.old
+	       ├── intermediate
+	       │   ├── certs
+	       │   │   ├── ca-chain.cert.pem ( Chain of Certificates )
+	       │   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
+	       │   │   └── make.ca.cert.pem ( Server Certificate )
+	       │   ├── crl
+	       │   ├── crlnumber
+	       │   ├── csr
+	       │   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
+	       │   │   └── make.ca.csr.pem ( Server Signing Request )
+	       │   ├── index.txt
+	       │   ├── newcerts
+	       │   ├── openssl.cnf
+	       │   ├── private
+	       │   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
+	       │   │   └── make.ca.key.pem ( Server Private Key )
+	       │   └── serial
+	       ├── newcerts
+	       │   └── 1000.pem
+	       ├── openssl.cnf
+	       ├── private
+	       │   └── ca.key.pem ( RootCA Certificate )
+	       ├── serial
+	       └── serial.old
+endef
+
+export DIR_TREE
+
+help:
+	@echo "Default FQDN is $(FQDN)"
+	@echo
+	@echo "Please use 'sudo make <target>' where <target> is one of"
+	@echo "  root             to generate Root CA"
+	@echo "  intermediate     to generate Intermediate CA"
+	@echo "  server FQDN=<>   to generate Certificate and Private key for the corresponding FQDN"
+	@echo "  quick FQDN=<>    to generate Certificate and Private key for the corresponding FQDN without Passphrase"
+	@echo
+	@echo
+	@echo "Structure of $(ROOT_DIR) $$DIR_TREE"
 
 cleanall:
 	@sudo rm -rf $(ROOT_DIR)
@@ -79,16 +124,15 @@ ca-chain:
 	@sudo echo "Certificate Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 
 key:
-ifneq ($(PASSPHRASE), "")
-	@sudo openssl genrsa -aes256 -passout pass:$(PASSPHRASE) -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
+	@sudo openssl genrsa -aes256 -out $(INTER_DIR)/private/$(FQDN).key.pem 2048
 	@sudo chmod 400 $(INTER_DIR)/private/$(FQDN).key.pem
-else
-	@sudo echo "PASSPHRASE argument needed"
-endif
 
 csr:
-	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(FQDN).key.pem -new -sha256 -out $(INTER_DIR)/csr/$(FQDN).csr.pem
+	@sudo openssl req -new -sha256 -config $(INTER_DIR)/openssl.cnf -key $(INTER_DIR)/private/$(FQDN).key.pem -out $(INTER_DIR)/csr/$(FQDN).csr.pem
 
+keyless:
+	@sudo openssl req -nodes -new -sha256 -config $(INTER_DIR)/openssl.cnf -keyout $(INTER_DIR)/private/$(FQDN).key.pem -out $(INTER_DIR)/csr/$(FQDN).csr.pem
+	
 pem:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
@@ -124,6 +168,8 @@ root: cleanall setup-root root-key root-ca root-verify
 
 intermediate: clean-inter setup-inter inter-key inter-ca inter-verify ca-chain
 
-certi: key csr pem verify
+server: key csr pem verify
+
+quick: keyless pem verify
 
 .PHONY: root intermediate certi ca-chain crl crl-point revoke-crl cleanall clean-inter
