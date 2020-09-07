@@ -199,7 +199,7 @@ root: cleanall setup-root root-key root-ca root-verify
 
 intermediate: cleanin setup-inter inter-key inter-ca inter-verify ca-chain
 
-ca: dhparam root intermediate
+ca: root intermediate dhparam
 
 server: clean key csr pem verify
 
