@@ -102,6 +102,7 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
+crlDistributionPoints = URI:https://webca.home/intermediate.crl.pem
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always
