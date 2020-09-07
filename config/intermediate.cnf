@@ -5,19 +5,21 @@ default_ca = CA_default
 
 [ CA_default ]
 dir               = /root/ca/intermediate
+
 certs             = $dir/certs
-crl_dir           = $dir/crl
+certificate       = $dir/certs/intermediate.cert.pem
 new_certs_dir     = $dir/newcerts
 
-database          = $dir/index.txt
-serial            = $dir/serial
-RANDFILE          = $dir/private/.rand
-
-private_key       = $dir/private/intermediate.key.pem
-certificate       = $dir/certs/intermediate.cert.pem
-
-crlnumber         = $dir/crlnumber
+crl_dir           = $dir/crl
 crl               = $dir/crl/intermediate.crl.pem
+
+RANDFILE          = $dir/private/.rand
+private_key       = $dir/private/intermediate.key.pem
+
+crlnumber         = $dir/db/crlnumber
+database          = $dir/db/index.txt
+serial            = $dir/db/serial
+
 crl_extensions    = crl_ext
 default_crl_days  = 30
 default_md        = sha256
@@ -46,11 +48,13 @@ commonName              = supplied
 emailAddress            = optional
 
 [ req ]
-default_bits        = 2048
-distinguished_name  = req_distinguished_name
-string_mask         = utf8only
-default_md          = sha256
-x509_extensions     = v3_ca
+default_bits            = 2048
+encrypt_key             = yes
+utf8                    = yes
+string_mask             = utf8only
+default_md              = sha256
+distinguished_name      = req_distinguished_name
+x509_extensions         = v3_ca
 
 [ req_distinguished_name ]
 countryName                     = Country Name (2 letter code)

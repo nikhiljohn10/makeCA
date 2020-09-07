@@ -83,10 +83,10 @@ clean:
 	@sudo rm -rf $(INTER_DIR)/certs/$(FQDN).chain.pem  $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/csr/$(FQDN).csr.pem $(INTER_DIR)/private/$(FQDN).key.pem
 
 setup-root:
-	@sudo mkdir -p $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private
+	@sudo mkdir -p $(ROOT_DIR)/certs $(ROOT_DIR)/crl $(ROOT_DIR)/newcerts $(ROOT_DIR)/private $(ROOT_DIR)/db
 	@sudo chmod 700 $(ROOT_DIR)/private
-	@sudo touch $(ROOT_DIR)/index.txt
-	@sudo echo 1000 > $(ROOT_DIR)/serial
+	@sudo touch $(ROOT_DIR)/db/index.txt
+	@sudo echo 1000 > $(ROOT_DIR)/db/serial
 	@sudo cp config/root.cnf $(ROOT_DIR)/openssl.cnf
 
 root-key:
@@ -109,11 +109,11 @@ root-verify:
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
 
 setup-inter:
-	@sudo mkdir -p $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private 
+	@sudo mkdir -p $(INTER_DIR)/certs $(INTER_DIR)/crl $(INTER_DIR)/csr $(INTER_DIR)/newcerts $(INTER_DIR)/private $(INTER_DIR)/db
 	@sudo chmod 700 $(INTER_DIR)/private
-	@sudo touch $(INTER_DIR)/index.txt
-	@sudo echo 1000 > $(INTER_DIR)/serial
-	@sudo echo 1000 > $(INTER_DIR)/crlnumber
+	@sudo touch $(INTER_DIR)/db/index.txt
+	@sudo echo 1000 > $(INTER_DIR)/db/serial
+	@sudo echo 1000 > $(INTER_DIR)/db/crlnumber
 	@sudo cp config/intermediate.cnf $(INTER_DIR)/openssl.cnf
 
 inter-key:
