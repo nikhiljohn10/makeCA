@@ -100,7 +100,7 @@ root-ca:
 	@sudo echo
 	@sudo echo "    Generating Root Public key"
 	@sudo echo
-	@sudo openssl req -new -sha256 -x509 -config $(ROOT_DIR)/openssl.cnf -key $(ROOT_DIR)/private/ca.key.pem -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem -subj ROOT_SUBJ
+	@sudo openssl req -new -sha256 -x509 -config $(ROOT_DIR)/openssl.cnf -key $(ROOT_DIR)/private/ca.key.pem -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem -subj $(ROOT_SUBJ)
 
 root-verify:
 	@sudo echo
@@ -127,7 +127,7 @@ inter-ca:
 	@sudo echo
 	@sudo echo "    Generating Intermediate Public key"
 	@sudo echo
-	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -new -sha256 -key $(INTER_DIR)/private/intermediate.key.pem -out $(INTER_DIR)/csr/intermediate.csr.pem -subj INTER_SUBJ
+	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -new -sha256 -key $(INTER_DIR)/private/intermediate.key.pem -out $(INTER_DIR)/csr/intermediate.csr.pem -subj $(INTER_SUBJ)
 	@sudo openssl ca -config $(ROOT_DIR)/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in $(INTER_DIR)/csr/intermediate.csr.pem -out $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/intermediate.cert.pem
 
