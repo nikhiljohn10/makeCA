@@ -5,6 +5,17 @@ INTER_DIR  := /root/ca/intermediate
 FQDN       := $(HOSTNAME).$(DOMAIN)
 CERT_FQDN  := ""
 
+COUNTRY    := IN
+STATE      := Kerala
+LOCATION   := Thrissur
+ORG        := Jwala Diamonds
+ORG_UNIT   := Jwala Diamonds Certificate Authority
+ROOT_CN    := Jwala Diamonds Root CA
+INTER_CN   := Jwala Diamonds Intermediate CA
+
+ROOT_SUBJ  := "/C=$(COUNTRY)/ST=$(STATE)/L=$(LOCATION)/O=$(ORG)/OU=$(ORG_UNIT)/CN=$(ROOT_CN)"
+INTER_SUBJ := "/C=$(COUNTRY)/ST=$(STATE)/L=$(LOCATION)/O=$(ORG)/OU=$(ORG_UNIT)/CN=$(INTER_CN)"
+
 define DIR_TREE
 
 	/root/ca
@@ -89,7 +100,7 @@ root-ca:
 	@sudo echo
 	@sudo echo "    Generating Root Public key"
 	@sudo echo
-	@sudo openssl req -config $(ROOT_DIR)/openssl.cnf -new -sha256 -key $(ROOT_DIR)/private/ca.key.pem -x509 -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem
+	@sudo openssl req -new -sha256 -x509 -config $(ROOT_DIR)/openssl.cnf -key $(ROOT_DIR)/private/ca.key.pem -days 7300 -extensions v3_ca -out $(ROOT_DIR)/certs/ca.cert.pem -subj ROOT_SUBJ
 
 root-verify:
 	@sudo echo
@@ -116,7 +127,7 @@ inter-ca:
 	@sudo echo
 	@sudo echo "    Generating Intermediate Public key"
 	@sudo echo
-	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -new -sha256 -key $(INTER_DIR)/private/intermediate.key.pem -out $(INTER_DIR)/csr/intermediate.csr.pem
+	@sudo openssl req -config $(INTER_DIR)/openssl.cnf -new -sha256 -key $(INTER_DIR)/private/intermediate.key.pem -out $(INTER_DIR)/csr/intermediate.csr.pem -subj INTER_SUBJ
 	@sudo openssl ca -config $(ROOT_DIR)/openssl.cnf -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in $(INTER_DIR)/csr/intermediate.csr.pem -out $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/intermediate.cert.pem
 
@@ -194,4 +205,12 @@ server: clean key csr pem verify
 
 quick: clean keyless pem verify
 
-.PHONY: ca crl crl-point revoke-crl
+publish:
+	@sudo rm -rf dist
+	@sudo mkdir dist
+	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem ./dist
+	@sudo find $(INTER_DIR)/certs ( -name '*.cert.pem' -name '*.chain.pem' ) -exec cp -at ./dist {} +
+	@sudo chown -R $(whoami):$(whoami) dist
+	@cd dist && python3 -m http.server 9090
+
+.PHONY: ca server quick crl crl-point revoke-crl publish
