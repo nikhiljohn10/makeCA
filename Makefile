@@ -209,7 +209,7 @@ publish:
 	@sudo rm -rf dist
 	@sudo mkdir dist
 	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem ./dist
-	@sudo find $(INTER_DIR)/certs ( -name '*.cert.pem' -name '*.chain.pem' ) -exec cp -at ./dist {} +
+	@sudo find $(INTER_DIR)/certs -type f \( -name '*.cert.pem' -name '*.chain.pem' \) -exec cp -at ./dist {} +
 	@sudo chown -R $(whoami):$(whoami) dist
 	@cd dist && python3 -m http.server 9090
 
