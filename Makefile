@@ -180,6 +180,8 @@ verify:
 crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
 	@sudo openssl crl -in $(INTER_DIR)/crl/intermediate.crl.pem -noout -text
+	@sudo mkdir -p $(ROOT_DIR)/web
+	@sudo cp $(INTER_DIR)/crl/intermediate.crl.pem $(ROOT_DIR)/web/intermediate.crl.pem
 
 crl-point:
 ifneq ($(CERT_FQDN), "")
