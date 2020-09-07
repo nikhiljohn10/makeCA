@@ -210,7 +210,7 @@ publish:
 	@sudo mkdir dist
 	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem ./dist
 	@sudo find /root/ca/intermediate/certs -type f \( ! -name 'dhparam2048.pem' -name '*.pem' \) -exec cp -at ./dist {} +
-	@sudo find ./dist/ -name '*.pem' -exec sh -c 'x="{}"; y=$$\(echo "$$x" | sed -e "s/pem$$/crt/"\); mv "$$x" "$$y"' \;
+	@sudo find ./dist/ -name '*.pem' -exec sh -c 'x="{}"; y=$$(echo "$$x" | sed -e "s/pem$$/crt/"); mv "$$x" "$$y"' \;
 	@sudo chown -R $(whoami):$(whoami) dist
 	@cd dist && python3 -m http.server 9090
 
