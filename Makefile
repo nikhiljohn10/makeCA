@@ -3,7 +3,7 @@ DOMAIN     := ca
 ROOT_DIR   := /root/ca
 INTER_DIR  := /root/ca/intermediate
 FQDN       := $(HOSTNAME).$(DOMAIN)
-CERT_FQDN  := ""
+RVK_FQDN  := ""
 
 COUNTRY    := IN
 STATE      := Kerala
@@ -22,38 +22,48 @@ define DIR_TREE
 	├── certs
 	│   └── ca.cert.pem ( RootCA Certificate )
 	├── crl
-	├── index.txt
-	├── index.txt.attr
-	├── index.txt.old
+	├── db
+	│   ├── index.txt
+	│   ├── index.txt.attr
+	│   ├── index.txt.old
+	│   ├── serial
+	│   └── serial.old
 	├── intermediate
 	│   ├── certs
 	│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
 	│   │   ├── dhparam2048.pem ( 2048 bit Diffie-Hellman Certificate )
 	│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
-	│   │   └── make.ca.cert.pem ( Server Certificate )
+	│   │   ├── make.ca.cert.pem ( Server Certificate )
+	│   │   └── make.ca.chain.pem ( Server Certificate Chain )
 	│   ├── crl
-	│   ├── crlnumber
+	│   │   └── intermediate.crl.pem ( Certificate revocation lists )
 	│   ├── csr
 	│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
 	│   │   └── make.ca.csr.pem ( Server Signing Request )
-	│   ├── index.txt
-	│   ├── index.txt.attr
-	│   ├── index.txt.old
+	│   ├── db
+	│   │   ├── crlnumber
+	│   │   ├── crlnumber.old
+	│   │   ├── index.txt
+	│   │   ├── index.txt.attr
+	│   │   ├── index.txt.attr.old
+	│   │   ├── index.txt.old
+	│   │   ├── serial
+	│   │   └── serial.old
 	│   ├── newcerts
-	│   │   └── 1000.pem
-	│   ├── openssl.cnf ( IntermediateCA Configuration )
-	│   ├── private
-	│   │   ├── intermediate.key.pem ( IntermediateCA Private Key )
-	│   │   └── make.ca.key.pem ( Server Private Key )
-	│   ├── serial
-	│   └── serial.old
+	│   │   ├── 1000.pem
+	│   │   └── 1001.pem
+	│   ├── openssl.cnf ( RootCA Configuration )
+	│   └── private
+	│       ├── intermediate.key.pem ( IntermediateCA Private Key )
+	│       └── make.ca.key.pem ( Server Private Key )
 	├── newcerts
 	│   └── 1000.pem
 	├── openssl.cnf ( RootCA Configuration )
 	├── private
-	│   └── ca.key.pem ( RootCA Certificate )
-	├── serial
-	└── serial.old
+	│   └── ca.key.pem ( RootCA Private key )
+	└── web
+	    ├── index.html
+	    └── intermediate.crl.pem
 endef
 
 export DIR_TREE
@@ -62,12 +72,16 @@ help:
 	@echo "Welcome to Certificate Authority Generator"
 	@echo
 	@echo "Please use 'sudo make <target>' where <target> is one of"
-	@echo "  root             to generate Root CA"
-	@echo "  intermediate     to generate Intermediate CA"
-	@echo "  server FQDN=<x>  to generate Certificate and Private key for the corresponding FQDN"
-	@echo "  quick FQDN=<x>   to generate Certificate and Private key for the corresponding FQDN without Passphrase"
+	@echo "  root                   to generate Root CA"
+	@echo "  intermediate           to generate Intermediate CA"
+	@echo "  server FQDN=<x>        to generate Certificate and Private key for the corresponding FQDN"
+	@echo "  quick FQDN=<x>         to generate Certificate and Private key for the corresponding FQDN without Passphrase"
+	@echo "  crl                    to generate CRL"
+	@echo "  rvk-crl RVK_FQDN=<x>   to revoke a domain"
+	@echo "  rvk-show RVK_FQDN=<x>  to show list of revoked domains"
 	@echo
-	@echo "Default FQDN is '$(FQDN)'. Use FQDN=<x> after 'make' command where '<x>' is your domain name"
+	@echo "Default FQDN is '$(FQDN)'. Use FQDN=<x> after 'make' target where '<x>' is your domain name"
+	@echo "Default RVK_FQDN is ''. Use RVK_FQDN=<x> after 'make' target where '<x>' is your domain name"
 	@echo
 	@echo "Tree Structure:"
 	@echo "$$DIR_TREE"
@@ -181,18 +195,18 @@ crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
 	@sudo openssl crl -in $(INTER_DIR)/crl/intermediate.crl.pem -noout -text
 
-crl-point:
-ifneq ($(CERT_FQDN), "")
-	@sudo openssl x509 -in $(INTER_DIR)/certs/$(CERT_FQDN).cert.pem -noout -text
+rvk-show:
+ifneq ($(RVK_FQDN), "")
+	@sudo openssl x509 -in $(INTER_DIR)/certs/$(RVK_FQDN).cert.pem -noout -text
 else
-	@sudo echo "CERT_FQDN argument needed"
+	@sudo echo "RVK_FQDN argument needed"
 endif
 
-revoke-crl: crl-point
-ifneq ($(CERT_FQDN), "")
-	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -revoke $(INTER_DIR)/certs/$(CERT_FQDN).cert.pem
+rvk-crl: rvk-show
+ifneq ($(RVK_FQDN), "")
+	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -revoke $(INTER_DIR)/certs/$(RVK_FQDN).cert.pem
 else
-	@sudo echo "CERT_FQDN argument needed"
+	@sudo echo "RVK_FQDN argument needed"
 endif
 
 root: cleanall setup-root root-key root-ca root-verify
@@ -212,4 +226,4 @@ publish:
 	@sudo find $(INTER_DIR)/certs -type f \( ! -name 'dhparam2048.pem' -name '*.pem' \) -exec cp -at $(ROOT_DIR)/web {} \;
 	@sudo chmod -R 755 $(ROOT_DIR)/web/*
 
-.PHONY: ca server quick crl crl-point revoke-crl publish
+.PHONY: ca server quick crl rvk-show rvk-crl publish
