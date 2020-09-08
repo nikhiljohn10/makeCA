@@ -180,8 +180,6 @@ verify:
 crl:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
 	@sudo openssl crl -in $(INTER_DIR)/crl/intermediate.crl.pem -noout -text
-	@sudo mkdir -p $(ROOT_DIR)/web
-	@sudo cp $(INTER_DIR)/crl/intermediate.crl.pem $(ROOT_DIR)/web/intermediate.crl.pem
 
 crl-point:
 ifneq ($(CERT_FQDN), "")
@@ -208,12 +206,10 @@ server: clean key csr pem verify
 quick: clean keyless pem verify
 
 publish:
-	@sudo rm -rf dist
-	@sudo mkdir dist
-	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem ./dist
-	@sudo find /root/ca/intermediate/certs -type f \( ! -name 'dhparam2048.pem' -name '*.pem' \) -exec cp -at ./dist {} +
-	@sudo find ./dist/ -name '*.pem' -exec sh -c 'x="{}"; y=$$(echo "$$x" | sed -e "s/pem$$/crt/"); mv "$$x" "$$y"' \;
-	@sudo chown -R $(whoami):$(whoami) dist
-	@cd dist && python3 -m http.server 9090
+	@sudo mkdir -p $(ROOT_DIR)/web
+	@sudo cp $(INTER_DIR)/crl/intermediate.crl.pem $(ROOT_DIR)/web/intermediate.crl.pem
+	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem $(ROOT_DIR)/web/ca.cert.crt
+	@sudo find $(INTER_DIR)/certs -type f \( ! -name 'dhparam2048.pem' -name '*.pem' \) -exec cp -at $(ROOT_DIR)/web {} \;
+	@sudo chmod -R 755 $(ROOT_DIR)/web/*
 
 .PHONY: ca server quick crl crl-point revoke-crl publish
