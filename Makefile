@@ -5,7 +5,10 @@ SSL_DIR    := /root/ssl
 INTER_DIR  := /root/ca/intermediate
 FQDN       := $(HOSTNAME).$(DOMAIN)
 RVK_FQDN   := ""
-CRL_URI    := http://$(FQDN)/intermediate.crl.pem
+
+CRL_URI_PROTOCOL  := http
+CRL_FILE          := intermediate.crl.pem
+CRL_URI           := $(CRL_URI_PROTO)://$(FQDN)/$(CRL_FILE)
 
 COUNTRY    := IN
 STATE      := Kerala
@@ -76,7 +79,7 @@ help:
 	@echo "  quick FQDN=<x>         to generate Certificate and Private key for the corresponding FQDN without Passphrase"
 	@echo "  crl                    to generate CRL"
 	@echo "  rvk-crl RVK_FQDN=<x>   to revoke a domain"
-	@echo "  rvk-show RVK_FQDN=<x>  to show list of revoked domains"
+	@echo "  info FQDN=<x>          to show details of domain certificate"
 	@echo
 	@echo "Default FQDN is '$(FQDN)'. Use FQDN=<x> after 'make' target where '<x>' is your domain name"
 	@echo "Default RVK_FQDN is ''. Use RVK_FQDN=<x> after 'make' target where '<x>' is your domain name"
@@ -169,7 +172,7 @@ csr:
 
 keyless:
 	@sudo openssl req -nodes -new -sha256 -config $(INTER_DIR)/openssl.cnf -keyout $(INTER_DIR)/private/$(FQDN).key.pem -out $(INTER_DIR)/csr/$(FQDN).csr.pem
-	
+
 pem:
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -extensions server_cert -days 375 -notext -md sha256 -in $(INTER_DIR)/csr/$(FQDN).csr.pem -out $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo cat $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/certs/ca-chain.cert.pem > $(INTER_DIR)/certs/$(FQDN).chain.pem
@@ -186,17 +189,13 @@ verify:
 	@sudo echo
 
 crl:
-	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/intermediate.crl.pem
-	@sudo openssl crl -in $(INTER_DIR)/crl/intermediate.crl.pem -noout -text
+	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -gencrl -out $(INTER_DIR)/crl/$(CRL_FILE)
+	@sudo openssl crl -in $(INTER_DIR)/crl/$(CRL_FILE) -noout -text
 
-rvk-show:
-ifneq ($(RVK_FQDN), "")
-	@sudo openssl x509 -in $(INTER_DIR)/certs/$(RVK_FQDN).cert.pem -noout -text
-else
-	@sudo echo "RVK_FQDN argument needed"
-endif
+info:
+	@sudo openssl x509 -in $(INTER_DIR)/certs/$(FQDN).cert.pem -noout -text
 
-rvk-crl: rvk-show
+rvk-crl:
 ifneq ($(RVK_FQDN), "")
 	@sudo openssl ca -config $(INTER_DIR)/openssl.cnf -revoke $(INTER_DIR)/certs/$(RVK_FQDN).cert.pem
 else
@@ -234,4 +233,4 @@ share:
 	@sudo echo "Sharing certificates..."
 	@cd $(ROOT_DIR)/web && python3 -m http.server 5555
 
-.PHONY: ca server quick crl rvk-show rvk-crl dh publish
+.PHONY: ca server quick crl info rvk-crl dh publish share
