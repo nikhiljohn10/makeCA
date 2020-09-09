@@ -1,9 +1,11 @@
 HOSTNAME   := make
 DOMAIN     := ca
 ROOT_DIR   := /root/ca
+SSL_DIR    := /root/ssl
 INTER_DIR  := /root/ca/intermediate
 FQDN       := $(HOSTNAME).$(DOMAIN)
-RVK_FQDN  := ""
+RVK_FQDN   := ""
+CRL_URI    := http://$(FQDN)/intermediate.crl.pem
 
 COUNTRY    := IN
 STATE      := Kerala
@@ -18,52 +20,48 @@ INTER_SUBJ := "/C=$(COUNTRY)/ST=$(STATE)/L=$(LOCATION)/O=$(ORG)/OU=$(ORG_UNIT)/C
 
 define DIR_TREE
 
-	/root/ca
-	├── certs
-	│   └── ca.cert.pem ( RootCA Certificate )
-	├── crl
-	├── db
-	│   ├── index.txt
-	│   ├── index.txt.attr
-	│   ├── index.txt.old
-	│   ├── serial
-	│   └── serial.old
-	├── intermediate
-	│   ├── certs
-	│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
-	│   │   ├── dhparam2048.pem ( 2048 bit Diffie-Hellman Certificate )
-	│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
-	│   │   ├── make.ca.cert.pem ( Server Certificate )
-	│   │   └── make.ca.chain.pem ( Server Certificate Chain )
-	│   ├── crl
-	│   │   └── intermediate.crl.pem ( Certificate revocation lists )
-	│   ├── csr
-	│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
-	│   │   └── make.ca.csr.pem ( Server Signing Request )
-	│   ├── db
-	│   │   ├── crlnumber
-	│   │   ├── crlnumber.old
-	│   │   ├── index.txt
-	│   │   ├── index.txt.attr
-	│   │   ├── index.txt.attr.old
-	│   │   ├── index.txt.old
-	│   │   ├── serial
-	│   │   └── serial.old
-	│   ├── newcerts
-	│   │   ├── 1000.pem
-	│   │   └── 1001.pem
-	│   ├── openssl.cnf ( RootCA Configuration )
-	│   └── private
-	│       ├── intermediate.key.pem ( IntermediateCA Private Key )
-	│       └── make.ca.key.pem ( Server Private Key )
-	├── newcerts
-	│   └── 1000.pem
-	├── openssl.cnf ( RootCA Configuration )
-	├── private
-	│   └── ca.key.pem ( RootCA Private key )
-	└── web
-	    ├── index.html
-	    └── intermediate.crl.pem
+/root/ca/
+├── certs
+│   └── ca.cert.pem ( RootCA Certificate )
+├── crl
+├── db
+│   ├── index.txt
+│   └── serial
+├── intermediate
+│   ├── certs
+│   │   ├── ca-chain.cert.pem ( Chain of Certificates )
+│   │   ├── intermediate.cert.pem ( IntermediateCA Certificate )
+│   │   ├── make.ca.cert.pem ( Server Certificate )
+│   │   └── make.ca.chain.pem ( Server Certificate Chain )
+│   ├── crl
+│   │   └── intermediate.crl.pem ( Certificate revocation lists )
+│   ├── csr
+│   │   ├── intermediate.csr.pem ( IntermediateCA Signing Request )
+│   │   └── make.ca.csr.pem ( Server Signing Request )
+│   ├── db
+│   │   ├── crlnumber
+│   │   ├── index.txt
+│   │   └── serial
+│   ├── newcerts
+│   │   └── 1000.pem
+│   ├── openssl.cnf ( IntermediateCA Configuration )
+│   └── private
+│       ├── intermediate.key.pem ( IntermediateCA Private Key )
+│       └── make.ca.key.pem ( Server Private Key )
+├── newcerts
+│   └── 1000.pem
+├── openssl.cnf ( RootCA Configuration )
+├── private
+│   ├── ca.key.pem ( RootCA Private key )
+│   └── dhparam2048.pem ( 2048 bit Diffie-Hellman Parameters )
+└── web
+    ├── ca.cert.crt
+    ├── ca-chain.cert.pem
+    ├── intermediate.cert.pem
+    ├── intermediate.crl.pem
+    ├── make.ca.cert.pem
+    └── make.ca.chain.pem
+
 endef
 
 export DIR_TREE
@@ -118,7 +116,7 @@ root-ca:
 
 root-verify:
 	@sudo echo
-	@sudo echo "    Verifing Root Public key"
+	@sudo echo "    Verifying Root Public key"
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(ROOT_DIR)/certs/ca.cert.pem
 
@@ -128,7 +126,7 @@ setup-inter:
 	@sudo touch $(INTER_DIR)/db/index.txt
 	@sudo echo 1000 > $(INTER_DIR)/db/serial
 	@sudo echo 1000 > $(INTER_DIR)/db/crlnumber
-	@sudo cp config/intermediate.cnf $(INTER_DIR)/openssl.cnf
+	@sudo sed -e 's/{YOUR_CRL_URI}/$(subst /,\/,$(CRL_URI))/' config/intermediate.cnf > $(INTER_DIR)/openssl.cnf
 
 inter-key:
 	@sudo echo
@@ -147,7 +145,7 @@ inter-ca:
 
 inter-verify:
 	@sudo echo
-	@sudo echo "    Verifing Intermediate Public key"
+	@sudo echo "    Verifying Intermediate Public key"
 	@sudo echo
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/intermediate.cert.pem
 	@sudo openssl verify -CAfile $(ROOT_DIR)/certs/ca.cert.pem $(INTER_DIR)/certs/intermediate.cert.pem
@@ -158,6 +156,8 @@ ca-chain:
 	@sudo echo
 	@sudo cat $(INTER_DIR)/certs/intermediate.cert.pem $(ROOT_DIR)/certs/ca.cert.pem > $(INTER_DIR)/certs/ca-chain.cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/ca-chain.cert.pem
+	@sudo echo "Root Certificate: $(ROOT_DIR)/certs/ca.cert.pem"
+	@sudo echo "Intermediate Certificate: $(INTER_DIR)/certs/intermediate.cert.pem"
 	@sudo echo "Certificate Chain: $(INTER_DIR)/certs/ca-chain.cert.pem"
 
 key:
@@ -175,12 +175,6 @@ pem:
 	@sudo cat $(INTER_DIR)/certs/$(FQDN).cert.pem $(INTER_DIR)/certs/ca-chain.cert.pem > $(INTER_DIR)/certs/$(FQDN).chain.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).cert.pem
 	@sudo chmod 444 $(INTER_DIR)/certs/$(FQDN).chain.pem
-
-dhparam:
-	@sudo echo
-	@sudo echo "    Generating 2048 bit Diffie-Hellman Certificate"
-	@sudo echo
-	@sudo openssl dhparam -outform pem -out $(INTER_DIR)/certs/dhparam2048.pem 2048
 
 verify:
 	@sudo openssl x509 -noout -text -in $(INTER_DIR)/certs/$(FQDN).cert.pem
@@ -209,21 +203,35 @@ else
 	@sudo echo "RVK_FQDN argument needed"
 endif
 
+dh:
+	@sudo echo
+	@sudo echo "    Generating 2048 bit Diffie-Hellman (DH) Parameters"
+	@sudo echo
+	@sudo mkdir -p $(ROOT_DIR)
+	@sudo openssl dhparam -outform pem -out $(ROOT_DIR)/private/dhparam2048.pem 2048
+	@sudo echo
+	@sudo echo "DH Parameters: $(ROOT_DIR)/private/dhparam2048.pem"
+	@sudo echo
+
 root: cleanall setup-root root-key root-ca root-verify
 
 intermediate: cleanin setup-inter inter-key inter-ca inter-verify ca-chain
 
-ca: root intermediate dhparam
+ca: root intermediate
 
 server: clean key csr pem verify
 
 quick: clean keyless pem verify
 
-publish:
+publish: crl
 	@sudo mkdir -p $(ROOT_DIR)/web
 	@sudo cp $(INTER_DIR)/crl/intermediate.crl.pem $(ROOT_DIR)/web/intermediate.crl.pem
 	@sudo cp $(ROOT_DIR)/certs/ca.cert.pem $(ROOT_DIR)/web/ca.cert.crt
-	@sudo find $(INTER_DIR)/certs -type f \( ! -name 'dhparam2048.pem' -name '*.pem' \) -exec cp -at $(ROOT_DIR)/web {} \;
-	@sudo chmod -R 755 $(ROOT_DIR)/web/*
+	@sudo find $(INTER_DIR)/certs -type f -name '*.pem' -exec cp -at $(ROOT_DIR)/web {} \;
+	@sudo chmod -R 755 $(ROOT_DIR)/web
 
-.PHONY: ca server quick crl rvk-show rvk-crl publish
+share:
+	@sudo echo "Sharing certificates..."
+	@cd $(ROOT_DIR)/web && python3 -m http.server 5555
+
+.PHONY: ca server quick crl rvk-show rvk-crl dh publish

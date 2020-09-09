@@ -104,6 +104,7 @@ authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 
+
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always
 

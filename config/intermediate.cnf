@@ -53,6 +53,7 @@ encrypt_key             = yes
 utf8                    = yes
 string_mask             = utf8only
 default_md              = sha256
+
 distinguished_name      = req_distinguished_name
 x509_extensions         = v3_ca
 
@@ -102,7 +103,7 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
-crlDistributionPoints = URI:https://webca.home/intermediate.crl.pem
+crlDistributionPoints = URI:{YOUR_CRL_URI}
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always
