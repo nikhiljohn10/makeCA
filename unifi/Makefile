@@ -9,7 +9,7 @@ UNIFI_PASS      := aircontrolenterprise
 
 # Edit the following variables as required
 UNIFI_FQDN      := UniFi
-UNIFI_COUNTRY   := New York
+UNIFI_COUNTRY   := US
 UNIFI_STATE     := New York
 UNIFI_CITY      := New York
 UNIFI_ORG       := Ubiquiti Inc.
