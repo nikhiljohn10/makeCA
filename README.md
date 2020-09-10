@@ -46,7 +46,6 @@ Generate Root, Intermediate and Server certificates with CRL using Makefile
         ├── intermediate.crl.pem
         ├── make.ca.cert.pem
         └── make.ca.chain.pem
-
 </pre>
 
 ### Usage
@@ -80,3 +79,7 @@ sudo make quick CRL_URI_PROTOCOL=https FQDN=www.example.com
 sudo make publish
 sudo make share
 ```
+
+### Bonus
+
+If you need to see a green lock in your browser when using Unifi Controller, use [makeUnifi](https://github.com/jwaladiamonds/makeCA/tree/master/unifi) for Local Area Networks

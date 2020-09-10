@@ -109,6 +109,7 @@ root-key:
 	@sudo echo "    Generating Root Private key"
 	@sudo echo
 	@sudo openssl genrsa -aes256 -out $(ROOT_DIR)/private/ca.key.pem 4096
+	@sudo echo "Setting permission of rootCA private key to Read-only by root user"
 	@sudo chmod 400  $(ROOT_DIR)/private/ca.key.pem
 
 root-ca:
