@@ -31,3 +31,7 @@ unifi:
 	@sudo echo "Restarting Unifi"
 	@sudo service unifi restart
 	@sudo echo "Successfully updated new SSL Certificate in your Unifi Controller"
+	@sudo echo "Add the following RootCA Certificate in your browser certificate authority manager or Windows Trusted Root Certificate List"
+	@sudo echo
+	@sudo cat $(ROOT_DIR)/certs/ca.cert.pem
+	@sudo echo
